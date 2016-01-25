@@ -17,6 +17,11 @@ import com.example.ferna.nimbeaconnearbylib.library.NimbeaconNearbyManager;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.nearby.messages.Message;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.nio.charset.StandardCharsets;
+
 public class MainActivity extends Activity {
 Button play,stop;
     @Override
@@ -43,12 +48,13 @@ Button play,stop;
                 NimbeaconInternalEventListener mListener = new NimbeaconInternalEventListener() {
                     @Override
                     public void onBeaconFound(Message message) {
-                        Log.i("ON BEACON FOUND", "FOUND");
+                        Log.i("FOUND", "DEVICE ID: " + message.toString().split("\\{id=")[1].split("\\}")[0]);
+                        Log.i("FOUND", "MESSAGE: " + message.getContent());
                     }
 
                     @Override
                     public void onBeaconLost(Message message) {
-                        Log.i("ON BEACON LOST", "LOST");
+                        Log.i("LOST","ON BEACON LOST "+message);
                     }
                 };
                 nimbeaconNearbyManager.init(getApplicationContext(), MainActivity.this, mListener);
