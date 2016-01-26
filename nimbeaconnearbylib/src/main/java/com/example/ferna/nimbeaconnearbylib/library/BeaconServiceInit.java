@@ -1,15 +1,21 @@
 package com.example.ferna.nimbeaconnearbylib.library;
 
+
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import com.example.ferna.nimbeaconnearbylib.R;
+import com.example.ferna.nimbeaconnearbylib.actions.NimbeaconNearbyAction;
+import com.example.ferna.nimbeaconnearbylib.actions.NimbeaconNearbyActionNotification;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
@@ -29,9 +35,10 @@ public class BeaconServiceInit extends Service implements GoogleApiClient.Connec
     private static final String TAG = BeaconServiceInit.class.getSimpleName();
     //private boolean mResolvingNearbyPermissionError = false;
     private NotificationManager mNotificationManager;
-    private String key;
     private NimbeaconNearbyManager nnM = NimbeaconNearbyManager.getInstance();
     private PendingIntent pendingIntent;
+    private NimBeaconNearbyHelper mHelper = NimBeaconNearbyHelper.getInstance();
+    private String actionType;
 
     @Override
     public void onConnected(Bundle bundle) {
@@ -68,7 +75,6 @@ public class BeaconServiceInit extends Service implements GoogleApiClient.Connec
     @Override
     public void onCreate() {
         super.onCreate();
-
     }
     @Override
     public int onStartCommand(final Intent intent, int flags, final int startId) {
@@ -77,6 +83,7 @@ public class BeaconServiceInit extends Service implements GoogleApiClient.Connec
         mNotificationManager =
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
+
         mGoogleApiClient = new GoogleApiClient.Builder(context)
                 .addApi(Nearby.MESSAGES_API)
                 .addConnectionCallbacks(this)
@@ -84,6 +91,17 @@ public class BeaconServiceInit extends Service implements GoogleApiClient.Connec
                 .build();
 
         mGoogleApiClient.connect();
+
+        if(intent==null) {
+            Log.i("intent nulo", "Nulo");
+            SharedPreferences prefs =
+                   getSharedPreferences("MyPreferences",Context.MODE_PRIVATE);
+            actionType = prefs.getString("actionType",null);
+
+            mHelper = NimBeaconNearbyHelper.getInstance();
+            mHelper.setNimbeaconActionType(NimbeaconNearbyAction.toMyEnum(actionType));
+            mHelper.setaListener(aListener);
+        }
 
         return START_STICKY;
     }
@@ -144,4 +162,53 @@ public class BeaconServiceInit extends Service implements GoogleApiClient.Connec
     private Intent getBackgroundSubscribeServiceIntent() {
         return new Intent(context, BeaconIntentService.class);
     }
+
+    // Action to track notification dismissal
+    public static final String ACTION_DISMISS =
+            "BeaconService.ACTION_DISMISS";
+
+    private NimbeaconNearbyActionListener aListener = new NimbeaconNearbyActionListener() {
+        @Override
+        public void onNotificationAction(NimbeaconNearbyActionNotification action) {
+            Log.i("onNotificationAction","NOTIFICATION");
+            Log.i("Action content ", action.getMessageContent());
+            NotificationManager notificationManager = (NotificationManager) context
+                    .getSystemService(Context.NOTIFICATION_SERVICE);
+
+            String packageName = context.getPackageName();
+            Intent notificationIntent = context.getPackageManager().getLaunchIntentForPackage(packageName);
+
+            notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP |
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            PendingIntent intent = PendingIntent.getActivity(context, 0,
+                    notificationIntent, 0);
+            Notification notification = new Notification.Builder(BeaconServiceInit.this).setContentTitle("Beacons Detected")
+                    .setContentText(String.format(action.getId()))
+                    .setSmallIcon(R.drawable.ic_stat_scan)
+                    .setContentIntent(intent)
+                            //.setDeleteIntent(delete)
+                    .build();
+
+            notification.flags |= Notification.FLAG_AUTO_CANCEL;
+            notificationManager.notify(action.getId(),0, notification);
+        }
+    };
+    /*final static String STOP_SERVICE_BROADCAST_KEY="StopServiceBroadcastKey";
+    final static int RQS_STOP_SERVICE = 1;
+
+    NotifyServiceReceiver notifyServiceReceiver;
+    public class NotifyServiceReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context arg0, Intent arg1) {
+
+            int rqs = arg1.getIntExtra(STOP_SERVICE_BROADCAST_KEY, 0);
+
+            if (rqs == RQS_STOP_SERVICE){
+                stopSelf();
+                ((NotificationManager) getSystemService(NOTIFICATION_SERVICE))
+                        .cancelAll();
+            }
+        }
+    }*/
 }

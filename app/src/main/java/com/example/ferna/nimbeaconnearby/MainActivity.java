@@ -12,6 +12,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 
+import com.example.ferna.nimbeaconnearbylib.actions.NimbeaconNearbyAction;
 import com.example.ferna.nimbeaconnearbylib.library.NimbeaconInternalEventListener;
 import com.example.ferna.nimbeaconnearbylib.library.NimbeaconNearbyManager;
 import com.google.android.gms.common.api.Status;
@@ -57,7 +58,7 @@ Button play,stop;
                         Log.i("LOST","ON BEACON LOST "+message);
                     }
                 };
-                nimbeaconNearbyManager.init(getApplicationContext(), MainActivity.this, mListener);
+                nimbeaconNearbyManager.init(getApplicationContext(), MainActivity.this, mListener, NimbeaconNearbyAction.NimbeaconActionType.NOTIFICATION);
             }
         });
         stop = (Button) findViewById(R.id.buttonStop);

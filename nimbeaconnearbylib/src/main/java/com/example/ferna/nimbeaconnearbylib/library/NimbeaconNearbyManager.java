@@ -4,8 +4,10 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.SharedPreferences;
 import android.util.Log;
 
+import com.example.ferna.nimbeaconnearbylib.actions.NimbeaconNearbyAction;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.nearby.messages.NearbyMessagesStatusCodes;
@@ -17,6 +19,7 @@ public class NimbeaconNearbyManager{
     private static final String TAG = "NimbeaconNearbyManager";
     private Activity mActivity;
     private Intent intentBeaconServiceInit = null;
+
     /**
      * Singleton.
      */
@@ -30,10 +33,24 @@ public class NimbeaconNearbyManager{
         }
         return sInstance;
     }
-    public void init(Context context,Activity activity,NimbeaconInternalEventListener mListener){
+    /*public void init(Context context,Activity activity,NimbeaconInternalEventListener mListener){
         Log.i("NearbyManager","init");
         mActivity = activity;
         NimBeaconNearbyHelper.getInstance().setmListener(mListener);
+        intentBeaconServiceInit = new Intent(context, BeaconServiceInit.class);
+        context.startService(intentBeaconServiceInit);
+    }*/
+    public void init(Context context,Activity activity,NimbeaconInternalEventListener mListener,NimbeaconNearbyAction.NimbeaconActionType backgroundAction){
+        Log.i("NearbyManager","init");
+        mActivity = activity;
+        NimBeaconNearbyHelper helper = NimBeaconNearbyHelper.getInstance();
+        helper.setmListener(mListener);
+
+        SharedPreferences prefs = context.getSharedPreferences("MyPreferences", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString("actionType", backgroundAction.toString());
+        editor.commit();
+
         intentBeaconServiceInit = new Intent(context, BeaconServiceInit.class);
         context.startService(intentBeaconServiceInit);
     }
@@ -64,5 +81,13 @@ public class NimbeaconNearbyManager{
             }
 
         }
+    }
+
+    public Activity getmActivity() {
+        return mActivity;
+    }
+
+    public void setmActivity(Activity mActivity) {
+        this.mActivity = mActivity;
     }
 }
